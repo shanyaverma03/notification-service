@@ -20,12 +20,31 @@ public class NotificationController {
 
     @PostMapping
     public ResponseEntity<Long> sendNotification(
-            @RequestBody Notification notification
-    ) {
+            @RequestBody Notification notification) {
         notification.setStatus(Status.UNREAD);
         notification.setCreatedAt(LocalDateTime.now());
 
         Notification saved = notificationRepository.save(notification);
         return ResponseEntity.ok(saved.getId());
     }
+
+    @GetMapping("/users/{userId}/notifications")
+    public ResponseEntity<?> getUserNotifications(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "false") boolean unreadOnly,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        if (limit <= 0) {
+            return ResponseEntity.badRequest().body("Limit must be greater than 0");
+        }
+
+        var notifications = unreadOnly
+                ? notificationRepository.findByUserIdAndStatusOrderByCreatedAtDesc(
+                        userId, Status.UNREAD)
+                : notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        return ResponseEntity.ok(
+                notifications.stream().limit(limit).toList());
+    }
+
 }
