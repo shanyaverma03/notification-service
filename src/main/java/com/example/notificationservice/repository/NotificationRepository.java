@@ -1,0 +1,17 @@
+package com.example.notificationservice.repository;
+
+import com.example.notificationservice.entity.Notification;
+import com.example.notificationservice.entity.Status;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
+
+    List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<Notification> findByUserIdAndStatusOrderByCreatedAtDesc(
+            Long userId,
+            Status status
+    );
+}
