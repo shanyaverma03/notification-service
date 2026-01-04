@@ -47,4 +47,22 @@ public class NotificationController {
                 notifications.stream().limit(limit).toList());
     }
 
+    @PostMapping("/{notificationId}/read")
+    public ResponseEntity<String> markAsRead(
+            @PathVariable Long notificationId) {
+        var notificationOpt = notificationRepository.findById(notificationId);
+
+        if (notificationOpt.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Notification not found");
+        }
+
+        var notification = notificationOpt.get();
+        notification.setStatus(Status.READ);
+        notificationRepository.save(notification);
+
+        return ResponseEntity.ok("Notification marked as READ");
+    }
+
 }
