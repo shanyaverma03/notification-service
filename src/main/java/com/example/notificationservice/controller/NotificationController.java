@@ -3,6 +3,7 @@ package com.example.notificationservice.controller;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.entity.Status;
 import com.example.notificationservice.repository.NotificationRepository;
+import com.example.notificationservice.service.RateLimiterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,14 +14,26 @@ import java.time.LocalDateTime;
 public class NotificationController {
 
     private final NotificationRepository notificationRepository;
+    private final RateLimiterService rateLimiterService;
 
-    public NotificationController(NotificationRepository notificationRepository) {
+    public NotificationController(
+            NotificationRepository notificationRepository,
+            RateLimiterService rateLimiterService) {
         this.notificationRepository = notificationRepository;
+        this.rateLimiterService = rateLimiterService;
     }
 
     @PostMapping
-    public ResponseEntity<Long> sendNotification(
+    public ResponseEntity<?> sendNotification(
             @RequestBody Notification notification) {
+
+        // 🔴 Redis rate limiting
+        if (!rateLimiterService.allowRequest(notification.getUserId())) {
+            return ResponseEntity
+                    .status(429)
+                    .body("Rate limit exceeded. Max 5 notifications per minute.");
+        }
+
         notification.setStatus(Status.UNREAD);
         notification.setCreatedAt(LocalDateTime.now());
 
@@ -64,5 +77,4 @@ public class NotificationController {
 
         return ResponseEntity.ok("Notification marked as READ");
     }
-
 }
